@@ -1,0 +1,43 @@
+﻿<UserControl x:Class="DSLRNet.UserControls.IconBuilderUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:DSLRNet.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="400">
+    <UserControl.Resources>
+        <local:ImagePathConverter x:Key="ImagePathConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+
+            <GroupBox Header="Icon Sheet Settings">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <CheckBox Content="Regenerate Icon Sheets" IsChecked="{Binding RegenerateIconSheets}" />
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding IconSheetSettings.Rarities}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" Margin="5" MaxWidth="200">
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding Name}" VerticalAlignment="Center" Margin="5" />
+                                    <Image  Source="{Binding BackgroundImageName, Converter={StaticResource ImagePathConverter}}" Width="160" Height="160" Stretch="Fill" />
+                                    <Button Margin="5,5" Content="Change" 
+                                            Command="{Binding DataContext.ChangeImageCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</UserControl>
