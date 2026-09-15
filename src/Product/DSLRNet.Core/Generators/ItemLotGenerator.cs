@@ -368,7 +368,7 @@ public class ItemLotGenerator : BaseHandler
             throw new Exception($"Item lot {itemLot.ID} has too many items");
         }   
 
-        int rarity = this.rarityHandler.ChooseRarityFromIdSet(IntValueRange.CreateFrom(gameStageConfig.AllowedRarities));
+        int rarity = this.rarityHandler.ChooseRarityFromIdSet(IntValueRange.CreateFrom(gameStageConfig.AllowedRarities), gameStageConfig.Stage);
 
         (int finalId, int finalCategory) = this.GenerateLoot(itemLotSettings, rarity);
 

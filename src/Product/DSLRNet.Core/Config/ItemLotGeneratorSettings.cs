@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Config;
+namespace DSLRNet.Core.Config;
 
 using IniParser.Model;
 using System;
@@ -25,6 +25,8 @@ public class ItemLotGeneratorSettings
 
     public bool ChaosLootEnabled { get; set; }
 
+    public ChaosRaritySettings ChaosRarityChances { get; set; } = new ChaosRaritySettings();
+
     public int GlobalDropChance { get; set; }
 
     public bool AllLootGauranteed { get; set; }
@@ -43,18 +45,21 @@ public class ItemLotGeneratorSettings
             LootPerItemLot_Bosses = itemLotSection.ContainsKey("LootPerItemLot_Bosses") && int.TryParse(itemLotSection["LootPerItemLot_Bosses"], out val) ? val : 1;
 
             ChestLootScannerSettings = new ScannerSettings();
-            ChestLootScannerSettings.Initialize(data, section);
+            ChestLootScannerSettings.Initialize(data, $"{section}.ChestLootScannerSettings");
 
             MapLootScannerSettings = new ScannerSettings();
-            MapLootScannerSettings.Initialize(data, section);
+            MapLootScannerSettings.Initialize(data, $"{section}.MapLootScannerSettings");
 
             EnemyLootScannerSettings = new ScannerSettings();
-            EnemyLootScannerSettings.Initialize(data, section);
+            EnemyLootScannerSettings.Initialize(data, $"{section}.EnemyLootScannerSettings");
 
             ChaosLootEnabled = itemLotSection.ContainsKey("ChaosLootEnabled") && bool.TryParse(itemLotSection["ChaosLootEnabled"], out bool boolVal) && boolVal;
             GlobalDropChance = itemLotSection.ContainsKey("GlobalDropChance") && int.TryParse(itemLotSection["GlobalDropChance"], out val) ? val : 4;
             AllLootGauranteed = itemLotSection.ContainsKey("AllLootGauranteed") && bool.TryParse(itemLotSection["AllLootGauranteed"], out boolVal) && boolVal;
         }
+
+        ChaosRarityChances = new ChaosRaritySettings();
+        ChaosRarityChances.Initialize(data);
     }
 }
 
@@ -64,9 +69,8 @@ public class ScannerSettings
 
     public int ApplyPercent { get; set; }
 
-    public void Initialize(IniData data, string parentSection)
+    public void Initialize(IniData data, string section)
     {
-        var section = $"{parentSection}.ChestLootScannerSettings";
         if (data.Sections.ContainsSection(section))
         {
             var scannerSection = data[section];

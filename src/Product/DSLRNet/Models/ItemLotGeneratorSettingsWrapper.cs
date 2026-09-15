@@ -12,6 +12,7 @@ public class ItemLotGeneratorSettingsWrapper : BaseModel<ItemLotGeneratorSetting
         ChestLootScannerSettings = new(_settings.ChestLootScannerSettings);
         MapLootScannerSettings = new(_settings.MapLootScannerSettings);
         EnemyLootScannerSettings = new(_settings.EnemyLootScannerSettings);
+        ChaosRarityChances = new(_settings.ChaosRarityChances);
     }
 
     public int ItemLotsPerBaseMapLot
@@ -92,7 +93,7 @@ public class ItemLotGeneratorSettingsWrapper : BaseModel<ItemLotGeneratorSetting
         }
     }
 
-    public ScannerSettingsWrapper ChestLootScannerSettings { get; } 
+    public ScannerSettingsWrapper ChestLootScannerSettings { get; }
 
     public ScannerSettingsWrapper MapLootScannerSettings { get; }
 
@@ -110,6 +111,8 @@ public class ItemLotGeneratorSettingsWrapper : BaseModel<ItemLotGeneratorSetting
             }
         }
     }
+
+    public ChaosRaritySettingsWrapper ChaosRarityChances { get; }
 
     public int GlobalDropChance
     {

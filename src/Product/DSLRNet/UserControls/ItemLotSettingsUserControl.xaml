@@ -6,6 +6,23 @@
              xmlns:local="clr-namespace:DSLRNet.UserControls"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <DataTemplate x:Key="ChaosRarityChancesTemplate">
+            <StackPanel Margin="5">
+                <TextBlock Text="Common" />
+                <local:SliderWithTextUserControl Minimum="0" Maximum="100" Value="{Binding Common, Mode=TwoWay}" TickFrequency="0.5" IsSnapToTickEnabled="True" IsPercentile="True" />
+                <TextBlock Text="Uncommon" />
+                <local:SliderWithTextUserControl Minimum="0" Maximum="100" Value="{Binding Uncommon, Mode=TwoWay}" TickFrequency="0.5" IsSnapToTickEnabled="True" IsPercentile="True" />
+                <TextBlock Text="Rare" />
+                <local:SliderWithTextUserControl Minimum="0" Maximum="100" Value="{Binding Rare, Mode=TwoWay}" TickFrequency="0.5" IsSnapToTickEnabled="True" IsPercentile="True" />
+                <TextBlock Text="Mythical" />
+                <local:SliderWithTextUserControl Minimum="0" Maximum="100" Value="{Binding Mythical, Mode=TwoWay}" TickFrequency="0.5" IsSnapToTickEnabled="True" IsPercentile="True" />
+                <TextBlock Text="Legendary" />
+                <local:SliderWithTextUserControl Minimum="0" Maximum="100" Value="{Binding Legendary, Mode=TwoWay}" TickFrequency="0.5" IsSnapToTickEnabled="True" IsPercentile="True" />
+                <TextBlock Text="{Binding Total, StringFormat='Total: {0:0.##} % (normalized if not 100)'}" Margin="0,5,0,0" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -19,11 +36,28 @@
                 <StackPanel  Margin="5">
                     <StackPanel Margin="0,0,0,10">
                         <CheckBox Content="Chaos Loot Enabled" IsChecked="{Binding ChaosLootEnabled, Mode=TwoWay}" />
-                        <TextBlock Text="Enable or disable chaos loot. Any rarity of any type can drop anywhere." Margin="0,5,0,5"/>
+                        <TextBlock Text="Any rarity can drop anywhere, using the drop chance of each rarity set for the game stage of the area." TextWrapping="Wrap" Margin="0,5,0,5"/>
                         <CheckBox Content="All item lots Guaranteed" IsChecked="{Binding AllLootGauranteed, Mode=TwoWay}" />
                         <TextBlock Text="Guarantee all loot drops.  Something will always drop" Margin="0,5,0,5"/>
                     </StackPanel>
                 </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Chaos Loot - Drop Chance Per Rarity"
+                      Visibility="{Binding ChaosLootEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TabControl DataContext="{Binding ChaosRarityChances}">
+                    <TabItem Header="Early">
+                        <ContentControl Content="{Binding Early}" ContentTemplate="{StaticResource ChaosRarityChancesTemplate}" />
+                    </TabItem>
+                    <TabItem Header="Mid">
+                        <ContentControl Content="{Binding Mid}" ContentTemplate="{StaticResource ChaosRarityChancesTemplate}" />
+                    </TabItem>
+                    <TabItem Header="Late">
+                        <ContentControl Content="{Binding Late}" ContentTemplate="{StaticResource ChaosRarityChancesTemplate}" />
+                    </TabItem>
+                    <TabItem Header="End">
+                        <ContentControl Content="{Binding End}" ContentTemplate="{StaticResource ChaosRarityChancesTemplate}" />
+                    </TabItem>
+                </TabControl>
             </GroupBox>
             <GroupBox Header="Map Pickups/Chests">
                 <StackPanel>

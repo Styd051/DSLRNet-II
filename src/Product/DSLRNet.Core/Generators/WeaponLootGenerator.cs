@@ -440,12 +440,13 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
     private WeaponModifications ApplyWeaponModifications(EquipParamWeapon weapon, int rarityId, WeaponTypes weaponType, bool isUniqueWeapon = false)
     {
         // randomize damage type
-        DamageTypeSetup primary = this.damageTypeHandler.ChooseDamageTypeAtRandom(this.Settings.ItemLotGeneratorSettings.ChaosLootEnabled, false);
+        // chaos loot only affects rarity, damage types always keep their configured weights
+        DamageTypeSetup primary = this.damageTypeHandler.ChooseDamageTypeAtRandom(false, false);
         DamageTypeSetup? secondary = null;
 
         if (this.Random.PassesPercentCheck(this.Settings.WeaponGeneratorSettings.SplitDamageTypeChance))
         {
-            secondary = this.damageTypeHandler.ChooseDamageTypeAtRandom(this.Settings.ItemLotGeneratorSettings.ChaosLootEnabled, true);
+            secondary = this.damageTypeHandler.ChooseDamageTypeAtRandom(false, true);
         }
 
         return weaponType switch

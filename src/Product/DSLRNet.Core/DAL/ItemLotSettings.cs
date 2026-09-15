@@ -200,7 +200,7 @@ class DslItemLotSetup
         data["dslitemlotsetup"]["guaranteeddrop"] = GuaranteedDrop.ToString();
         data["dslitemlotsetup"]["loottypeweights"] = ListToString(LootTypeWeights);
         data["dslitemlotsetup"]["weapontypeweights"] = ListToString(WeaponTypeWeights);
-        data["dslitemlotsetup"]["dropchancemultiplier"] = DropChanceMultiplier.ToString();
+        data["dslitemlotsetup"]["dropchancemultiplier"] = DropChanceMultiplier.ToString(CultureInfo.InvariantCulture);
         data["dslitemlotsetup"]["isforbosses"] = IsForBosses.ToString();
         iniParser.WriteFile(file, data);
     }

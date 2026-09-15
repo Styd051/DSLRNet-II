@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Config;
+namespace DSLRNet.Core.Config;
 
 using IniParser.Model;
 using IniParser;
@@ -87,7 +87,7 @@ public class Settings
         data["Settings.ArmorGeneratorSettings"]["ResistParamBuffCount"] = ArmorGeneratorSettings.ResistParamBuffCount.ToString();
         data["Settings.ArmorGeneratorSettings"]["CutRateParamBuffCount"] = ArmorGeneratorSettings.CutRateParamBuffCount.ToString();
         data["Settings.WeaponGeneratorSettings"]["UniqueNameChance"] = WeaponGeneratorSettings.UniqueNameChance.ToString();
-        data["Settings.WeaponGeneratorSettings"]["UniqueWeaponMultiplier"] = WeaponGeneratorSettings.UniqueWeaponMultiplier.ToString();
+        data["Settings.WeaponGeneratorSettings"]["UniqueWeaponMultiplier"] = WeaponGeneratorSettings.UniqueWeaponMultiplier.ToString(CultureInfo.InvariantCulture);
         data["Settings.WeaponGeneratorSettings"]["UniqueItemNameColor"] = WeaponGeneratorSettings.UniqueItemNameColor;
         data["Settings.WeaponGeneratorSettings"]["SplitDamageTypeChance"] = WeaponGeneratorSettings.SplitDamageTypeChance.ToString();
         data["Settings.WeaponGeneratorSettings"]["DamageIncreasesStaminaThreshold"] = WeaponGeneratorSettings.DamageIncreasesStaminaThreshold.ToString();
@@ -115,6 +115,7 @@ public class Settings
         data["Settings.IconBuilderSettings.IconSheetSettings.Rarities.Rarity4"]["BackgroundImageName"] = IconBuilderSettings.IconSheetSettings.Rarities[3].BackgroundImageName;
         data["Settings.IconBuilderSettings.IconSheetSettings.Rarities.Rarity5"]["RarityIds"] = string.Join(",", IconBuilderSettings.IconSheetSettings.Rarities[4].RarityIds);
         data["Settings.IconBuilderSettings.IconSheetSettings.Rarities.Rarity5"]["BackgroundImageName"] = IconBuilderSettings.IconSheetSettings.Rarities[4].BackgroundImageName;
+        ItemLotGeneratorSettings.ChaosRarityChances.WriteTo(data);
 
         File.WriteAllLines(path, data.ToString().Split("\n"));
     }
@@ -143,7 +144,7 @@ public class Settings
     {
         var section = data["Settings"];
         DeployPath = section.ContainsKey("DeployPath") ? section["DeployPath"] : string.Empty;
-        OrderedModPaths = section.ContainsKey("OrderedModPaths") ? [.. section["OrderedModPaths"].Split(',')] : [];
+        OrderedModPaths = section.ContainsKey("OrderedModPaths") ? [.. section["OrderedModPaths"].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)] : [];
         RandomSeed = section.ContainsKey("RandomSeed") && int.TryParse(section["RandomSeed"], out int result) ? result : new Random().Next();
         GamePath = section.ContainsKey("GamePath") ? section["GamePath"] : string.Empty;
         MessageFileNames = section.ContainsKey("MessageFileNames") ? [.. section["MessageFileNames"].Split(',')] : [];

@@ -16,13 +16,13 @@ public class RarityHandler(
 
     public Dictionary<int, int> CountByRarity { get; set; } = [];
 
-    public int ChooseRarityFromIdSet(IntValueRange range)
+    public int ChooseRarityFromIdSet(IntValueRange range, GameStage gameStage)
     {
         int finalId;
 
         if (this.settings.ItemLotGeneratorSettings.ChaosLootEnabled)
         {
-            finalId = randomProvider.GetRandomItem(RarityConfigs.Keys);
+            finalId = this.ChooseChaosRarity(gameStage);
         }
         else
         {
@@ -44,6 +44,32 @@ public class RarityHandler(
         CountByRarity[finalId]++;
 
         return finalId;
+    }
+
+    private int ChooseChaosRarity(GameStage gameStage)
+    {
+        ChaosRaritySettings chaosSettings = this.settings.ItemLotGeneratorSettings.ChaosRarityChances;
+        ChaosRarityChances chances = chaosSettings.Get(gameStage);
+
+        // percentages can be fractional (0.5%), scale them up to integer weights
+        List<WeightedValue<RarityTier>> tierWeights = Enum.GetValues<RarityTier>()
+            .Where(tier => chaosSettings.TierRarityIds[tier].Any(this.RarityConfigs.ContainsKey))
+            .Select(tier => new WeightedValue<RarityTier> { Value = tier, Weight = (int)Math.Round(chances.Get(tier) * 100) })
+            .ToList();
+
+        if (tierWeights.Sum(d => d.Weight) <= 0)
+        {
+            return this.randomProvider.GetRandomItem(this.RarityConfigs.Keys);
+        }
+
+        RarityTier chosenTier = this.randomProvider.NextWeightedValue(tierWeights);
+
+        List<WeightedValue<int>> rarityWeights = chaosSettings.TierRarityIds[chosenTier]
+            .Where(this.RarityConfigs.ContainsKey)
+            .Select(id => new WeightedValue<int> { Value = id, Weight = this.RarityConfigs[id].SelectionWeight })
+            .ToList();
+
+        return this.randomProvider.NextWeightedValue(rarityWeights);
     }
 
     public List<bool> GetRarityEffectChances(int rarityId, float chanceMultiplier)

@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Common;
+namespace DSLRNet.Core.Common;
 
 public class RandomProvider(int seed)
 {
@@ -30,7 +30,13 @@ public class RandomProvider(int seed)
     {
         int weightTotal = values.Sum(d => d.Weight);
 
-        int weightedResult = this.NextInt(0, weightTotal);
+        if (weightTotal <= 0)
+        {
+            return values.First().Value;
+        }
+
+        // roll in [1, total] so each value is picked with exactly its weight and zero weights are never picked
+        int weightedResult = this.NextInt(1, weightTotal);
 
         foreach (WeightedValue<T> val in values)
         {
@@ -68,7 +74,7 @@ public class RandomProvider(int seed)
     {
         if (percent < 100)
         {
-            return this.NextInt(IntValueRange.PercentRange) < percent;
+            return this.NextInt(0, 99) < percent;
         }
         else
         {
