@@ -7,7 +7,8 @@ public class CsvDataSource<T>(DataSourceConfig paramSource, RandomProvider rando
 {
     public override Task<IEnumerable<T>> LoadDataAsync()
     {       
-        List<T> list = csv.LoadCsv<T>(paramSource.SourcePath);
+        string sourcePath = Path.IsPathRooted(paramSource.SourcePath) ? paramSource.SourcePath : PathHelper.FullyQualifyAppDomainPath(paramSource.SourcePath);
+        List<T> list = csv.LoadCsv<T>(sourcePath);
         return Task.FromResult(list.AsEnumerable());
     }
 }

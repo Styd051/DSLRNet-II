@@ -112,7 +112,6 @@ public class SpEffectHandler : BaseHandler
     public List<int> GetPossibleWeaponSpeffectTypes(EquipParamWeapon weapon, bool allowstandardspeffects = true)
     {
         List<int> speffecttypes = [];
-        List<int> speffectvalues = [3, 2];
 
         if (weapon.enableSorcery == 1)
         {
@@ -121,7 +120,7 @@ public class SpEffectHandler : BaseHandler
 
         if (weapon.enableMiracle == 1)
         {
-            speffectvalues.Add(2);
+            speffecttypes.Add(2);
         }
 
         if (allowstandardspeffects)

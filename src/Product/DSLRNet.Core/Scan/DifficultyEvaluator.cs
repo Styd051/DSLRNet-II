@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Scan;
+namespace DSLRNet.Core.Scan;
 
 using DSLRNet.Core.DAL;
 using DSLRNet.Core.Extensions;
@@ -78,7 +78,6 @@ public class DifficultyEvaluator
         // We can fine tune and give a game stage bump to the top % hardest bosses in the map
         foreach (var gameStage in Enum.GetValues<GameStage>())
         {
-            var hpRange = gameStageHpRanges[gameStage];
             var bosses = lotDetails.Where(d => d.EvaluatedGameStage == gameStage).ToList();
             var topBosses = bosses.Where(d => d.NpcParam != null).OrderByDescending(d => d.NpcParam.hp).Take((int)(bosses.Count * 0.2));
             foreach (var topBoss in topBosses)
@@ -129,7 +128,7 @@ public class DifficultyEvaluator
 
     public GameStage EvaluateDifficultyByScalingSpEffect(ItemLotSettings settings, NpcParam npc)
     {
-        (Dictionary<int, GameStage> vanilla, Dictionary<int, GameStage> dlc) = this.scaleCache.GetOrAdd(settings.ID, InitializeHpMultMaps(settings));
+        (Dictionary<int, GameStage> vanilla, Dictionary<int, GameStage> dlc) = this.scaleCache.GetOrAdd(settings.ID, _ => InitializeHpMultMaps(settings));
 
         int spEffectId = npc.spEffectID3;
         GameStage gameStage = GameStage.Early;
@@ -151,7 +150,7 @@ public class DifficultyEvaluator
 
                 if (!vanilla.TryGetValue(areaScalingId, out gameStage) && !dlc.TryGetValue(areaScalingId, out gameStage))
                 {
-                    throw new Exception("Literally can't find what scaling SPEffect {spEffectId} is");
+                    throw new Exception($"Literally can't find what scaling SPEffect {spEffectId} is");
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.ViewModels;
+namespace DSLRNet.ViewModels;
 
 using System.ComponentModel;
 using System.IO;
@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.Input;
+using DSLRNet.Core.Common;
 using DSLRNet.Core.Config;
 using DSLRNet.Core;
 using DSLRNet.Models;
@@ -27,6 +28,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private int selectedTabIndex;
     private string lastRunCompleteMessage = string.Empty;
     private Brush lastRunCompleteColor = new SolidColorBrush(Colors.Black);
+
+    private static string UserSettingsPath => PathHelper.FullyQualifyAppDomainPath("Settings.User.ini");
 
     public MainWindowViewModel()
     {
@@ -54,12 +57,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
             settingsWrapper.RandomSeed = new Random().Next();
         }
 
-        settingsWrapper.OriginalObject.SaveSettings("Settings.User.ini");
+        settingsWrapper.OriginalObject.SaveSettings(UserSettingsPath);
 
         Process.Start(new ProcessStartInfo
         {
             FileName = "notepad.exe",
-            Arguments = "Settings.User.ini"
+            Arguments = $"\"{UserSettingsPath}\""
         });
     }
 
@@ -87,7 +90,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             {
                 settingsWrapper.RandomSeed = new Random().Next();
             }
-            settingsWrapper.OriginalObject.SaveSettings("Settings.User.ini");
+            settingsWrapper.OriginalObject.SaveSettings(UserSettingsPath);
             LogMessages.Add($"Starting {operation}...");
             await Task.Run(async () =>
             {
@@ -172,7 +175,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             var destinationPath = Path.Combine("Assets", "LootIcons", fileName);
 
             // Ensure the directory exists
-            Directory.CreateDirectory(Path.Combine("Assets", "LootIcons"));
+            Directory.CreateDirectory(PathHelper.FullyQualifyAppDomainPath("Assets", "LootIcons"));
 
             using var imageTest = new MagickImage(selectedFilePath);
             if (imageTest.Width != imageTest.Height)
@@ -182,7 +185,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             }
 
             // Copy the file to the destination
-            File.Copy(selectedFilePath, destinationPath, true);
+            File.Copy(selectedFilePath, PathHelper.FullyQualifyAppDomainPath(destinationPath), true);
 
             // Update the BackgroundImageName property
             ((RarityIconDetailsWrapper)item).BackgroundImageName = destinationPath;
@@ -242,9 +245,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public string LastRunCompleteMessage 
-    { 
-        get => lastRunCompleteMessage; 
+    public string LastRunCompleteMessage
+    {
+        get => lastRunCompleteMessage;
         set
         {
             if (lastRunCompleteMessage != value)

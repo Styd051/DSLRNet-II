@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Generators;
+namespace DSLRNet.Core.Generators;
 
 using DSLRNet.Core.Common;
 using DSLRNet.Core.Config;
@@ -65,7 +65,7 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
         newWeapon.rarity = this.RarityHandler.GetRarityParamValue(rarityId);
         newWeapon.iconId = this.RarityHandler.GetIconId(newWeapon.iconId, rarityId, isUnique: isUniqueWeapon);
         newWeapon.reinforceTypeId = 0;
-        
+
         if (weaponType != WeaponTypes.StaffsSeals)
         {
             // 42300 allows scaling from all sources (STR,DEX,INT,FTH,ARC)
@@ -91,14 +91,17 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
         WeaponModifications modifications = this.ApplyWeaponModifications(
             newWeapon,
             rarityId,
-            weaponType);
+            weaponType,
+            isUniqueWeapon);
 
         this.ApplyWeaponScalingRange(newWeapon, modifications, rarityId);
         this.ApplyWeaponRequiredStatChanges(newWeapon, rarityId);
 
-        this.damageTypeHandler.ApplyDamageTypeWeaponSpEffects(modifications, newWeapon.GenericParam);
-
-        string weaponDesc = string.Join(Environment.NewLine, modifications.SpEffectDescriptions);
+        string weaponDesc = string.Join(
+            Environment.NewLine,
+            modifications.SpEffectDescriptions
+                .Concat(modifications.SpEffectTexts.Select(s => s.Description))
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
 
         if (weaponType == WeaponTypes.Normal)
         {
@@ -202,7 +205,7 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
 
         IntValueRange statScalingRange = this.RarityHandler.GetWeaponScalingRange(rarityId);
 
-        // set primary scaling 
+        // set primary scaling
         string primaryScalingParam = this.Random.GetRandomItem(damageParams.Keys.ToList());
 
         takenParams.Add(primaryScalingParam);
@@ -260,7 +263,7 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
             int calculatedValue = Convert.ToInt32((properValue + addition) * percentValue);
 
             newWeapon.SetValue(
-                correctParam.ParamName.Replace("correct", "proper"), 
+                correctParam.ParamName.Replace("correct", "proper"),
                 calculatedValue);
         }
     }
@@ -372,26 +375,32 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
         mods.PrimaryDamageValue = primaryDamage;
         mods.SecondaryDamageValue = secondaryDamage;
 
-        List<int> options = this.SpEffectHandler.GetPossibleWeaponSpeffectTypes(weapon);
-
-        this.ApplySpEffects(rarityId, options, weapon.GenericParam, 1.0f, LootType.Weapon);
-
         List<string> passiveParams = this.GetPassiveSpEffectFieldNames();
 
         List<string> behSpEffectSlots = this.Configuration.LootParam.WeaponBehSpeffects;
 
         List<string> weaponEffectTextParams = this.Configuration.LootParam.SpeffectMsg;
 
-        weapon.SetValue(passiveParams[0], mods.PrimaryDamageType.SpEffect);
-        weapon.SetValue(behSpEffectSlots[0], mods.PrimaryDamageType.OnHitSpEffect);
+        // the damage types decide the weapon's effects, so clear the base weapon's own ones first
+        foreach (string effectParam in passiveParams.Concat(behSpEffectSlots).Concat(weaponEffectTextParams).Where(weapon.GenericParam.ContainsKey))
+        {
+            weapon.SetValue(effectParam, -1);
+        }
+
         weapon.SetValue(weaponEffectTextParams[0], mods.PrimaryDamageType.Message);
 
         if (mods.SecondaryDamageType != null)
         {
-            weapon.SetValue(passiveParams[1], mods.SecondaryDamageType.SpEffect);
-            weapon.SetValue(behSpEffectSlots[1], mods.SecondaryDamageType.OnHitSpEffect);
             weapon.SetValue(weaponEffectTextParams[1], mods.SecondaryDamageType.Message);
         }
+
+        // damage type passive and on hit effects are only written here, writing them in more slots would apply them twice
+        this.damageTypeHandler.ApplyDamageTypeWeaponSpEffects(mods, weapon.GenericParam);
+
+        // random rarity effects go in the passive slots the damage types left free
+        List<int> options = this.SpEffectHandler.GetPossibleWeaponSpeffectTypes(weapon);
+
+        mods.SpEffectTexts = this.ApplySpEffects(rarityId, options, weapon.GenericParam, 1.0f, LootType.Weapon).ToList();
 
         List<string> effectStrings = [];
         if (!string.IsNullOrEmpty(mods.PrimaryDamageType.EffectDescription))
@@ -414,7 +423,7 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
 
         weapon.spAttribute = hitVfx;
 
-        float critMultiplier = mods.PrimaryDamageType.CriticalMultAddition + mods.SecondaryDamageType?.CriticalMultAddition ?? 0;
+        float critMultiplier = mods.PrimaryDamageType.CriticalMultAddition + (mods.SecondaryDamageType?.CriticalMultAddition ?? 0);
 
         int critValue = 0;
 
@@ -439,7 +448,6 @@ public class WeaponLootGenerator : ParamLootGenerator<EquipParamWeapon>
 
     private WeaponModifications ApplyWeaponModifications(EquipParamWeapon weapon, int rarityId, WeaponTypes weaponType, bool isUniqueWeapon = false)
     {
-        // randomize damage type
         // chaos loot only affects rarity, damage types always keep their configured weights
         DamageTypeSetup primary = this.damageTypeHandler.ChooseDamageTypeAtRandom(false, false);
         DamageTypeSetup? secondary = null;

@@ -1,4 +1,5 @@
-﻿using DSLRNet.Core;
+using DSLRNet.Core;
+using DSLRNet.Core.Common;
 using DSLRNet.Core.Config;
 using System.Diagnostics;
 
@@ -14,7 +15,7 @@ try
         await DSLRRunner.ScanAsync(loadedSettings);
 
         // Open the "ScannedLots" folder
-        string scannedLotsPath = Path.Combine(Directory.GetCurrentDirectory(), "Assets", "Data", "ItemLots", "Scanned");
+        string scannedLotsPath = PathHelper.FullyQualifyAppDomainPath("Assets", "Data", "ItemLots", "Scanned");
         if (Directory.Exists(scannedLotsPath))
         {
             Process.Start(new ProcessStartInfo
@@ -40,6 +41,6 @@ catch (Exception ex)
     Process.Start(new ProcessStartInfo
     {
         FileName = "notepad.exe",
-        Arguments = "Settings.User.ini"
+        Arguments = $"\"{PathHelper.FullyQualifyAppDomainPath("Settings.User.ini")}\""
     });
 }

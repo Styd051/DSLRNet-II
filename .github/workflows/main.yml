@@ -55,7 +55,7 @@ jobs:
         Remove-Item -Recurse -Force ${{ github.workspace }}/${{ env.Output_Path }}/combined/runtimes/osx-arm64
 
     - name: Upload zip file
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: DSLRNet-SHA${{ github.sha }}
         path: ${{ github.workspace }}/${{ env.Output_Path }}/combined

@@ -11,9 +11,11 @@ public class ImagePathConverter : IValueConverter
     {
         if (value is string path && !string.IsNullOrEmpty(path))
         {
-            if (File.Exists(path))
+            string fullPath = Path.IsPathRooted(path) ? path : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+
+            if (File.Exists(fullPath))
             {
-                return Path.GetFullPath(path);
+                return fullPath;
             }
         }
 

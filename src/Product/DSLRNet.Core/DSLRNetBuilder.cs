@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core;
+namespace DSLRNet.Core;
 
 using DSLRNet.Core.DAL;
 using DSLRNet.Core.Generators;
@@ -27,12 +27,12 @@ public class DSLRNetBuilder(
     {
         Directory.CreateDirectory(this.settings.DeployPath);
 
-        List<ItemLotSettings> enemyOverrides = Directory.GetFiles("Assets\\Data\\ItemLots\\EnemiesOverrides", "*.ini", SearchOption.AllDirectories)
+        List<ItemLotSettings> enemyOverrides = Directory.GetFiles(PathHelper.FullyQualifyAppDomainPath("Assets", "Data", "ItemLots", "EnemiesOverrides"), "*.ini", SearchOption.AllDirectories)
             .Select(s => ItemLotSettings.Create(logger, s, this.configuration.Itemlots.Categories[0]))
             .Where(s => s != null)
             .ToList();
 
-        List<ItemLotSettings> mapOverrides = Directory.GetFiles("Assets\\Data\\ItemLots\\MapsOverrides", "*.ini", SearchOption.AllDirectories)
+        List<ItemLotSettings> mapOverrides = Directory.GetFiles(PathHelper.FullyQualifyAppDomainPath("Assets", "Data", "ItemLots", "MapsOverrides"), "*.ini", SearchOption.AllDirectories)
             .Select(s => ItemLotSettings.Create(logger, s, this.configuration.Itemlots.Categories[1]))
             .Where(s => s != null)
             .ToList();
@@ -92,12 +92,12 @@ public class DSLRNetBuilder(
 
     public async Task ApplyChanges(string regulationFile, ParamEditsRepository repository)
     {
-        // write csv file with headers, but only for new things, aka none of the 
+        // write csv file with headers, but only for new things, aka none of the
         List<ParamEdit> edits = repository.GetParamEdits(ParamOperation.Create);
 
         IEnumerable<ParamNames> paramNames = edits.Select(d => d.ParamName).Distinct();
 
-        await Parallel.ForEachAsync(paramNames, (paramName, c) => 
+        await Parallel.ForEachAsync(paramNames, (paramName, c) =>
         {
             // write csv
             string csvFile = Path.Combine(this.settings.DeployPath, $"{paramName}.csv");
@@ -143,7 +143,14 @@ public class DSLRNetBuilder(
             // copy msg file to a working file
             // process using working file as base
             string destinationFile = Path.Combine(this.settings.DeployPath, "msg", settings.MessageLocale, Path.GetFileName(gameMsgFile));
-            string sourceFile = destinationFile.Replace(".dcx", "pre-dslr.dcx");
+            string sourceFile = destinationFile.Replace(".dcx", ".pre-dslr.dcx");
+            string legacySourceFile = destinationFile.Replace(".dcx", "pre-dslr.dcx");
+
+            // older versions saved the backup without the dot, reuse it rather than copying a file that may already contain DSLR entries
+            if (!File.Exists(sourceFile) && File.Exists(legacySourceFile))
+            {
+                File.Move(legacySourceFile, sourceFile);
+            }
 
             if (!File.Exists(sourceFile))
             {

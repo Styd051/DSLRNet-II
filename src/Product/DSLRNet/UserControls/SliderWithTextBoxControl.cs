@@ -48,8 +48,8 @@ namespace DSLRNet.UserControls
 
         public bool IsSnapToTickEnabled
         {
-            get { return (bool)GetValue(TickFrequencyProperty); }
-            set { SetValue(TickFrequencyProperty, value); }
+            get { return (bool)GetValue(IsSnapToTickEnabledProperty); }
+            set { SetValue(IsSnapToTickEnabledProperty, value); }
         }
 
         public bool IsPercentile

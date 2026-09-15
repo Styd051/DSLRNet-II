@@ -83,7 +83,7 @@ public class DSLRRunner
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .WriteTo.Console()
-            .WriteTo.File($"log\\log_{timestamp}.txt")
+            .WriteTo.File(PathHelper.FullyQualifyAppDomainPath("log", $"log_{timestamp}.txt"))
             .CreateLogger();
 
         services.AddLogging((builder) =>

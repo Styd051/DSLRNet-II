@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Generators;
+namespace DSLRNet.Core.Generators;
 
 using DSLRNet.Core.Common;
 using DSLRNet.Core.Contracts.Params;
@@ -120,7 +120,7 @@ public class ItemLotGenerator : BaseHandler
                 {
                     this.logger.LogDebug($"ItemLot {itemLotIds[x]} already exists in data for type {itemLotSettings.Category}, basing template on existing");
                     newItemLot = existingItemLot.CloneToBase();
-                    
+
                 }
                 else if (this.GeneratedDataRepository.TryGetParamEdit(itemLotSettings.ParamName, itemLotIds[x], out ParamEdit? paramEdit))
                 {
@@ -141,15 +141,20 @@ public class ItemLotGenerator : BaseHandler
 
                 newItemLot.Name = string.Empty;
 
-                int offset = Math.Max(newItemLot.GetIndexOfFirstOpenLotItemId(), dropGauranteed ? 1 : 2);
+                int firstOpenIndex = newItemLot.GetIndexOfFirstOpenLotItemId();
 
-                if (offset < 0)
+                if (firstOpenIndex < 0)
                 {
-                    throw new Exception($"No open item spots in item lot {newItemLot.ID}");
+                    // a full item lot keeps its existing drops instead of having them overwritten
+                    this.logger.LogWarning($"Enemy item lot {newItemLot.ID} has no open item slots, skipping");
+                    this.progressTracker.CurrentStageProgress += 1;
+                    continue;
                 }
 
+                int offset = Math.Max(firstOpenIndex, dropGauranteed ? 1 : 2);
+
                 int startingIndex = offset;
-                int endingIndex = Math.Clamp(offset + this.settings.ItemLotGeneratorSettings.LootPerItemLot_Enemy, 1, ItemLotParamMax);
+                int endingIndex = Math.Clamp(offset + this.settings.ItemLotGeneratorSettings.LootPerItemLot_Enemy, 1, ItemLotParamMax + 1);
 
                 for (int y = startingIndex; y < endingIndex; y++)
                 {
@@ -183,9 +188,7 @@ public class ItemLotGenerator : BaseHandler
     {
         GenericParam defaultValue = GenericParam.FromObject(this.ItemLotTemplate.Clone());
 
-        this.progressTracker.CurrentStageStepCount = 
-            (itemLotSettings.IsForBosses ? settings.ItemLotGeneratorSettings.LootPerItemLot_Map : settings.ItemLotGeneratorSettings.LootPerItemLot_Bosses) 
-            * itemLotSettings.GameStageConfigs.Values.Sum(d => d.ItemLotIds.Count);
+        this.progressTracker.CurrentStageStepCount = itemLotSettings.GameStageConfigs.Values.Sum(d => d.ItemLotIds.Count);
 
         this.progressTracker.CurrentStageProgress = 0;
 
@@ -216,15 +219,18 @@ public class ItemLotGenerator : BaseHandler
 
                     int offset = 1;
 
-                    int lootPerLot = itemLotSettings.IsForBosses ? this.settings.ItemLotGeneratorSettings.LootPerItemLot_Bosses : this.settings.ItemLotGeneratorSettings.LootPerItemLot_Map;
+                    int lootPerLot = Math.Min(
+                        itemLotSettings.IsForBosses ? this.settings.ItemLotGeneratorSettings.LootPerItemLot_Bosses : this.settings.ItemLotGeneratorSettings.LootPerItemLot_Map,
+                        ItemLotParamMax);
+
                     for (int y = 0; y < lootPerLot; y++)
                     {
                         this.CreateItemLotEntry(
                             itemLotSettings,
                             gameStageConfig,
                             newItemLot,
-                            offset + y,
                             lootPerLot,
+                            offset + y,
                             (float)itemLotSettings.DropChanceMultiplier,
                             true);
                     }
@@ -363,10 +369,10 @@ public class ItemLotGenerator : BaseHandler
         float dropMult,
         bool dropGauranteed = false)
     {
-        if (itemNumber >= ItemLotParamMax)
+        if (itemNumber > ItemLotParamMax)
         {
             throw new Exception($"Item lot {itemLot.ID} has too many items");
-        }   
+        }
 
         int rarity = this.rarityHandler.ChooseRarityFromIdSet(IntValueRange.CreateFrom(gameStageConfig.AllowedRarities), gameStageConfig.Stage);
 
@@ -402,9 +408,9 @@ public class ItemLotGenerator : BaseHandler
 
         // do a pass and figure out what items slots are for what
         var itemChanceFields = itemLot.GetFieldNamesByFilter("lotItemBasePoint0");
-        for(int i = 1; i < itemChanceFields.Count; i++)
+        for(int i = 1; i <= itemChanceFields.Count; i++)
         {
-            (string name, ushort basePointValue, ushort quantity, bool isNew) = 
+            (string name, ushort basePointValue, ushort quantity, bool isNew) =
                 ($"lotItemBasePoint0{i}", itemLot.GetValue<ushort>($"lotItemBasePoint0{i}"), itemLot.GetValue<ushort>($"lotItemNum0{i}"), addedItemIndexes.Contains(i));
 
             if (basePointValue > 0 && itemLot.GetValue<int>($"lotItemId0{i}") == 0 && noDropItem.basePointValue == 0)
@@ -445,7 +451,7 @@ public class ItemLotGenerator : BaseHandler
 
                 foreach (var (name, basePointValue, quantity, isNew) in itemsToSplitCost)
                 {
-                    itemLot.SetValue(name, basePointValue - splitAmount);
+                    itemLot.SetValue(name, Math.Max(basePointValue - splitAmount, 0));
                     excessPoints -= splitAmount;
                 }
             }

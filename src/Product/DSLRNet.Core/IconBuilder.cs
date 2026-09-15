@@ -165,10 +165,10 @@ public partial class IconBuilder(
                 return int.TryParse(d, out int res) ? res : -1;
             });
 
-        if (maxIconId > settings.IconSheetSettings.StartAt)
+        if (maxIconId >= settings.IconSheetSettings.StartAt)
         {
             logger.LogInformation($"Configured icon starting Id of {settings.IconSheetSettings.StartAt} is lower than max Id currently in use {maxIconId}, defaulting to {maxIconId + 1}");
-            settings.IconSheetSettings.StartAt = maxIconId;
+            settings.IconSheetSettings.StartAt = maxIconId + 1;
         }
 
         RarityIconMappingConfig sheetConfig = new()
@@ -187,9 +187,30 @@ public partial class IconBuilder(
 
         Dictionary<LootType, List<ushort>> iconsToDuplicate = [];
 
-        iconsToDuplicate[LootType.Weapon] = dataAccess.EquipParamWeapon.GetAll().Select(s => s.iconId).ToList();
+        iconsToDuplicate[LootType.Weapon] = dataAccess.EquipParamWeapon.GetAll().Select(s => s.iconId).Distinct().ToList();
         iconsToDuplicate[LootType.Armor] = dataAccess.EquipParamProtector.GetAll().Select(s => s.iconIdF).ToList().Union(dataAccess.EquipParamProtector.GetAll().Select(s => s.iconIdM).ToList()).ToList();
         iconsToDuplicate[LootType.Talisman] = dataAccess.EquipParamAccessory.GetAll().Select(s => s.iconId).ToList();
+
+        // a regulation.bin newer than the menu layouts (e.g. packaged vanilla files with a patched game) references icons
+        // that don't exist yet, skip those instead of failing the whole run; the items keep their normal icon
+        HashSet<int> availableIconIds = layoutAtlases
+            .SelectMany(atlas => atlas.SubTextures)
+            .Select(subTexture => Path.GetFileNameWithoutExtension(subTexture.Name))
+            .Where(name => name.Contains("MENU_ItemIcon_"))
+            .Select(name => int.TryParse(name[(name.LastIndexOf('_') + 1)..], out int id) ? id : -1)
+            .Where(id => id >= 0)
+            .ToHashSet();
+
+        foreach (LootType lootType in iconsToDuplicate.Keys.ToList())
+        {
+            List<ushort> missingIcons = iconsToDuplicate[lootType].Where(id => !availableIconIds.Contains(id)).Distinct().ToList();
+
+            if (missingIcons.Count > 0)
+            {
+                logger.LogWarning($"Skipping {missingIcons.Count} {lootType} icons missing from the menu layouts, those items keep their normal icon: {string.Join(",", missingIcons)}");
+                iconsToDuplicate[lootType] = iconsToDuplicate[lootType].Where(id => availableIconIds.Contains(id)).ToList();
+            }
+        }
 
         ConcurrentBag<string> iconSheetFileNames = [];
 
@@ -212,7 +233,7 @@ public partial class IconBuilder(
 
                 if (rarity.RarityIds.First() == -1 && lootType != LootType.Weapon)
                 {
-                    progressTracker.CurrentStageStepCount += 1;
+                    progressTracker.CurrentStageProgress += 1;
                     continue;
                 }
 
@@ -257,7 +278,7 @@ public partial class IconBuilder(
                     generatedSheets.Add(newItem);
                 }
 
-                progressTracker.CurrentStageStepCount += 1;
+                progressTracker.CurrentStageProgress += 1;
             }
 
             return ValueTask.CompletedTask;
@@ -397,7 +418,14 @@ public partial class IconBuilder(
         }
 
         string fileDestination = Path.Combine(destinationPath, "menu", "hi", "01_common.sblytbnd.dcx");
-        string preDSLRFile = fileDestination.Replace(".dcx", "pre-dslr.dcx");
+        string preDSLRFile = fileDestination.Replace(".dcx", ".pre-dslr.dcx");
+        string legacyPreDSLRFile = fileDestination.Replace(".dcx", "pre-dslr.dcx");
+
+        // older versions saved the backup without the dot, reuse it rather than copying a layout that may already contain DSLR atlases
+        if (!File.Exists(preDSLRFile) && File.Exists(legacyPreDSLRFile))
+        {
+            File.Move(legacyPreDSLRFile, preDSLRFile);
+        }
 
         if (!File.Exists(preDSLRFile))
         {
@@ -486,7 +514,8 @@ public partial class IconBuilder(
     {
         return loadedPNGImageCache.GetOrAdd(rarity.BackgroundImageName, (name) =>
         {
-            Image<Rgba32> image = Image.Load<Rgba32>(rarity.BackgroundImageName);
+            string imagePath = Path.IsPathRooted(name) ? name : PathHelper.FullyQualifyAppDomainPath(name);
+            Image<Rgba32> image = Image.Load<Rgba32>(imagePath);
             image.Mutate(x => x.Resize(new Size(settings.IconSheetSettings.IconDimensions.IconSize)));
             return image;
         });

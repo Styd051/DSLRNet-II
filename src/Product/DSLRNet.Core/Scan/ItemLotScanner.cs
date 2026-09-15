@@ -1,4 +1,4 @@
-﻿namespace DSLRNet.Core.Scan;
+namespace DSLRNet.Core.Scan;
 
 using DSLRNet.Core.Config;
 using DSLRNet.Core.DAL;
@@ -29,22 +29,25 @@ public class ItemLotScanner(
 
         var startingId = 9990;
 
-        ItemLotSettings mapLots = ItemLotSettings.Create(logger, "Assets\\Data\\ItemLots\\Default_Map_Drops.ini", configuration.Itemlots.Categories[1])
+        string defaultMapDropsFile = PathHelper.FullyQualifyAppDomainPath("Assets", "Data", "ItemLots", "Default_Map_Drops.ini");
+        string defaultEnemyFile = PathHelper.FullyQualifyAppDomainPath("Assets", "Data", "ItemLots", "Default_Enemy.ini");
+
+        ItemLotSettings mapLots = ItemLotSettings.Create(logger, defaultMapDropsFile, configuration.Itemlots.Categories[1])
             ?? throw new Exception("Could not read default item lot settings for map drops");
         mapLots.ID = startingId++;
         mapLots.Realname = "Map Drops";
 
-        ItemLotSettings chestsLots = ItemLotSettings.Create(logger, "Assets\\Data\\ItemLots\\Default_Map_Drops.ini", configuration.Itemlots.Categories[1])
+        ItemLotSettings chestsLots = ItemLotSettings.Create(logger, defaultMapDropsFile, configuration.Itemlots.Categories[1])
             ?? throw new Exception("Could not read default item lot settings for chests drops");
         chestsLots.ID = startingId++;
         chestsLots.Realname = "Opened Chests Drops";
 
-        ItemLotSettings enemyLots = ItemLotSettings.Create(logger, "Assets\\Data\\ItemLots\\Default_Enemy.ini", configuration.Itemlots.Categories[0])
+        ItemLotSettings enemyLots = ItemLotSettings.Create(logger, defaultEnemyFile, configuration.Itemlots.Categories[0])
             ?? throw new Exception("Could not read default item lot settings for enemy drops");
         enemyLots.ID = startingId++;
         enemyLots.Realname = "Enemy Drops";
 
-        ItemLotSettings bossLots = ItemLotSettings.Create(logger, "Assets\\Data\\ItemLots\\Default_Map_Drops.ini", configuration.Itemlots.Categories[1])
+        ItemLotSettings bossLots = ItemLotSettings.Create(logger, defaultMapDropsFile, configuration.Itemlots.Categories[1])
             ?? throw new Exception("Could not read default item lot settings for boss drops");
         bossLots.ID = startingId++;
         bossLots.Realname = "Boss Drops";
@@ -140,9 +143,9 @@ public class ItemLotScanner(
     }
 
     private Dictionary<GameStage, int> ScanEnemyLots(
-        List<NpcParam> npcParams, 
-        ItemLotSettings settings, 
-        Dictionary<int, (NpcParam, GameStage)> enemyItemLotMapping, 
+        List<NpcParam> npcParams,
+        ItemLotSettings settings,
+        Dictionary<int, (NpcParam, GameStage)> enemyItemLotMapping,
         Dictionary<int, NpcGameStage> scannedNpcDuplicates,
         List<EventDropItemLotDetails> bossDetails)
     {
@@ -252,7 +255,7 @@ public class ItemLotScanner(
             {
                 GameStageConfig gameStage = this.random.PassesPercentCheck(60) ? maxConfig : minConfig;
 
-                addedByStage[gameStage.Stage] += candidateTreasures.Count;
+                addedByStage[gameStage.Stage] += 1;
 
                 gameStage.ItemLotIds.Add(treasure);
             }

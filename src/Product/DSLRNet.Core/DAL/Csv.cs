@@ -46,7 +46,8 @@ public class Csv(ILogger<Csv> logger)
                     }
                     else
                     {
-                        values.Add(value?.ToString() ?? string.Empty);
+                        // invariant culture so decimals are written as 1.5 and not 1,5 which would shift the columns
+                        values.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
                     }
 
                 }
