@@ -52,13 +52,13 @@ public class ChaosRaritySettings
 {
     private const string SectionBase = "Settings.ItemLotGeneratorSettings.ChaosRarityChances";
 
-    public ChaosRarityChances Early { get; set; } = new() { Common = 20f, Uncommon = 55f, Rare = 20f, Mythical = 4.5f, Legendary = 0.5f };
+    public ChaosRarityChances Early { get; set; } = new() { Common = 35f, Uncommon = 50f, Rare = 13f, Mythical = 1.8f, Legendary = 0.2f };
 
-    public ChaosRarityChances Mid { get; set; } = new() { Common = 10f, Uncommon = 47f, Rare = 31f, Mythical = 10f, Legendary = 2f };
+    public ChaosRarityChances Mid { get; set; } = new() { Common = 20f, Uncommon = 45f, Rare = 28f, Mythical = 6.5f, Legendary = 0.5f };
 
-    public ChaosRarityChances Late { get; set; } = new() { Common = 5f, Uncommon = 35f, Rare = 40f, Mythical = 17f, Legendary = 3f };
+    public ChaosRarityChances Late { get; set; } = new() { Common = 10f, Uncommon = 35f, Rare = 38f, Mythical = 15f, Legendary = 2f };
 
-    public ChaosRarityChances End { get; set; } = new() { Common = 2f, Uncommon = 28f, Rare = 42f, Mythical = 25f, Legendary = 3f };
+    public ChaosRarityChances End { get; set; } = new() { Common = 5f, Uncommon = 25f, Rare = 40f, Mythical = 27f, Legendary = 3f };
 
     // tiers are keyed by rarity id rather than name so renamed rarity setups (BrainRotEdition) keep working
     public Dictionary<RarityTier, List<int>> TierRarityIds { get; set; } = new()
